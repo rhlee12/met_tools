@@ -5,19 +5,20 @@
 require(ggplot2)
 require(readxl)
 # Point R to the fil
-wind.data.location="~/Desktop/2013-2016 MetData_DD_WindRose.xlsx"
-sheet="Data"
-speed.name="Average Wind Speed"
-dir.name="Wind Direction"
+wind.data.location="~/Desktop/2013-2016 MetData_DD_WindRose.xlsx" # where does the wind data live?
+sheet="Data" # if using xls files, what is the name of the sheet with the data?
+speed.name="Average Wind Speed" # what is the name of the speed column
+dir.name="Wind Direction" #what is the name of the direction column
+save.dir="~/Desktop/" # Where do you want to save the output plot?
 
 # Read in data, coerce to data frame
 data=data.frame(readxl::read_xlsx(path = wind.data.location, sheet = sheet))
 
-# Fixing column names
+# Fixing column names - specific to this file
 colnames(data)=c("Water Year", "Date", colnames(data)[3:ncol(data)])
 data=data[-1,]
 
-#Function definition
+#Function definition - hit source in the upper right to load the function, and execude script
 wind.rose.plot = function(data, speed.name, dir.name, speed.bins, dir.bins, save.dir){
     #
     options(stringsAsFactors = F)
@@ -60,7 +61,7 @@ wind.rose.plot = function(data, speed.name, dir.name, speed.bins, dir.bins, save
     dir.labels<-paste0(bgn.labels, "-", end.labels)
     title=""
     #Make and prettify the plot
-    ggplot2::ggplot(data = plotable.df, ggplot2::aes(x=dir.cut, fill=speed.cut, colors=factor(speed.cut)))+
+    plot.out= ggplot2::ggplot(data = plotable.df, ggplot2::aes(x=dir.cut, fill=speed.cut, colors=factor(speed.cut)))+
         ggplot2::geom_bar(width = .95, show.legend = T, na.rm = T)+
         ggplot2::theme_linedraw()+
         ggplot2::coord_polar(theta = "x", start = 0)+
@@ -69,7 +70,12 @@ wind.rose.plot = function(data, speed.name, dir.name, speed.bins, dir.bins, save
         ggplot2::labs(title=title)+
         ggplot2::scale_x_discrete(labels=dir.labels)+
         ggplot2::scale_fill_discrete(h = c(0, 240), l=65, c=100, name="Wind Speed, m/s")+
-        ggplot2::geom_vline(xintercept=c(0.5, 9.5, 18.5, 27.5))+
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = (90-end.labels)%%180))
-
+        #ggplot2::geom_vline(xintercept=c(0.5, 9.5, 18.5, 27.5))+#crosshairs
+        #ggplot2::theme(axis.text.x = ggplot2::element_text(angle = (90-end.labels)%%180))+ Radial labels
+        ggplot2::theme(line = ggplot2::element_line(colour = "gray"))
+    ggplot2::ggsave(filename = "windrose.pdf", plot = plot.out, device = "pdf", path = save.dir, width = 10, height = 7.5, units = "in", dpi = 180)
+    return(plot.out)
 }
+
+## Run the fucntion
+wind.rose.plot(data=data, speed.name=speed.name, dir.name=dir.name, save.dir=save.dir)
