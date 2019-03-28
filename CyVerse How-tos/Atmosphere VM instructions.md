@@ -6,7 +6,7 @@ In [Atmosphere](https://atmo.cyverse.org/application/images), we're going to be 
 
 The next page will give you an option to 'Add To Project' or 'Launch'. Click 'Add To Project' if you'd like to categorize the project, otherwise select 'Launch'.
 
-In the popup, the only option to change is the "Instance Size" option. 'tiny2' should work OK, but a larger instances up to a storage size of 128 GB are valid for our NEON accounts.
+In the popup, the only option to change is the "Instance Size" option. 'tiny2' should work OK for most simple tasks, but a larger instances up to a storage size of 128 GB are valid for our NEON accounts.
 
 Hitting 'Launch' in the lower right will begin setting up the machine, which takes a little while. The next page after selecting Launch will list the machine status, once it is listed _Active_ the machine is ready.
 
@@ -89,7 +89,7 @@ Feb 11 14:26:18 vm##-##.cyverse.org systemd[1]: Started RStudio Server.`
 You can also confirm the server is running with the command `rstudio-server status`.
 
 ### Installing other key stuff for R
-Before some key R packages will install, we need to add a few more Linux packages. For metScanR/metDownloadR rcurl, rnoaa, httr, RNRCS, and some other packages won't install without these steps.
+Before some key R packages will install, we need to add a few more Linux packages. For API-calling packages this is important; rcurl, rnoaa, httr, RNRCS, and some other packages won't install without these steps.
 
 1. Start out by updating your linux packages, some of the stuff that came with R/RStudio may be out of date: `sudo apt update`.
 1. `sudo apt-get install libcurl4-gnutls-dev` - need the libcurl package for rcurl.
