@@ -1,4 +1,4 @@
-# Using Atmosphere for Mesonet Scraping
+# Using RStudio Server on Atmosphere
 
 ## Setting up the instance
 
