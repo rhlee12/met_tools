@@ -1,0 +1,39 @@
+---
+title: "The NEON API Part 2: Data Download"
+author: "Robert Lee"
+date: "08/03/2018"
+output: html_document
+---
+  
+  ```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Putting the **data** endpoint to good use
+
+As we discovered in part 1, the API can be used to discover what data products NEON offers, and at what sites. In this post, we'll use the information on beetle data availability in Alaska to fetch some data. For now, we'll just initialize some variables from the last part, please visit part 1 to see how we got them. 
+
+
+``` {r declare values}
+beetle_code="DP1.10022.001"
+sites=c("BARR", "BONA", "DEJU", "HEAL", "TOOL")
+
+```
+
+To get data via the NEON API, we use the **data** endpoint (who knew?). The structure of the endpoint is /data/**Data Product ID**/**Site**/**Month**/; we have two out of the three pieces of information needed to pull data, we're missing what month we want data for. We'll just pick a month, and given that we're looking for information on beetles, a summer month seems like the best choice for Alaska. We'll do July of 2017-- the API is looking for months in "YYYY-MM" format, so we'll pass it "2017-07". To see the output, we'll also just look at the data from DEJU:
+
+``` {r data out}
+
+# Lets concatinate our pieces of the request into one request:
+call=paste0("http://data.neonscience.org/api/v0/data/", beetle_code, "/DEJU/2017-07")
+
+# Call the API-- dont forget the $data!
+data_return=rjson::fromJSON(file=call)$data
+
+## Lets see the head of the first element of what's returned:
+data_return[[1]][1]
+
+```
+
+This doesn't look like data- instead we've got some file names, file sizes, and what look like links to data. To actulally get data, we'll have to use the URL returned under the `url` element. Note that burried in the long URL string there is a string **"Amz-Expires=3600"**. This means that the link returned will expire in 3600 seconds, we can never recycle old download links to the data. 
+

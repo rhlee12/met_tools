@@ -1,0 +1,117 @@
+---
+title: "The NEON API Part 1: Data Discovery"
+author: "Robert Lee"
+date: "7/20/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### The NEON API
+
+Interaction with the NEON API is fairly straightforward with R. The API returns results in well-formatted JSON, so only a package like `jsonlite` or `rjson` is needed to read API returns. Request URLs can be constructed and passed to the API directly in the JSON-parsing function used to access the API.
+
+The API base URL is "http://data.neonscience.org/api/v0/", with the following valid endpoints:  
+
+ - **products**, which returns information on all data products in the NEON data product catalog   
+ - **sites**, which returns information on all sites in the NEON network  
+ - **locations**, which returns spatial metadata for sites *only* when a site code is also provided (e.g. locations/CPER)
+ - **data**, which returns data *only* when a site code and month is also provided (e.g. /CPER/2017-01)
+ - **taxonomy**, which returns taxon information for NEON's biological samples, provided taxonomic information is supplied (e.g. taxonomy?taxonTypeCode=TICK)
+ - **samples**, which returns information on samples used in NEON's data products. 
+ 
+For this article, we will only discuss the first four endpoints as they are the most useful for the average researcher in using NEON data.
+ 
+### Example calls
+
+Returning data from the NEON API is fairly straightforward, and requires only a little background knowledge of NEON's system of data product and site naming. For true novices, the **products** and **sites** endpoints can be used to return the relevant information to build API calls to return data.
+
+Suppose you'd like to get information on beetles from NEON sites in Alaska. The API doesn't support a searching feature on the server side, but information on both sites and data products can be easily returned for parsing in R:
+
+``` {r general info}
+
+# Make a call directly to the sites endpoint for information on all sites. 
+# Note that the data comes in a nested list format, under the top level list 'data'.
+# We can use '$data' at the end of our rjson function to store everything in the 
+# top level list in our 'sites' list, for a slightly simplified list structure.
+sites=rjson::fromJSON(file ="http://data.neonscience.org/api/v0/sites/")$data
+
+# The same trick with '$data' can be used when making our 'prods' list.
+prods=rjson::fromJSON(file ="http://data.neonscience.org/api/v0/products/")$data
+
+```
+
+
+In `sites` and `prods` we now have all the information on NEON sites and data products respectively. We need two sets of information from each list to download our Alaskan air temperature data: the four letter site codes of all sites in Alaska, and the data product codes for beetle data. To get to both of these pieces of information, lets look at the structure of our lists. We'll look at the first few items in the first element of the `prods` list we just created:
+
+```{r parse} 
+
+head(prods[[1]])
+
+```
+As we can see, both the product name and codes occur as sub-elements of each list item in `prods`. Since the JSON data provided has been turned into a list, we'll rely on the handy `lapply` function to find other data products with wind in the name:
+
+``` {r wind find} 
+
+#first we'll extract the names of all the data products found in prods:
+dp_names=lapply(prods, "[[", "productName")
+
+#Next we'll find the index of products with "wind" in the name:
+beetle_indx=which(unlist(lapply(dp_names, function(x) grepl(pattern="beetle", x))))
+
+#What are those names?
+dp_names[beetle_indx]
+
+```
+
+Looking at the names of the data products with "beetle" in the name, it looks like only the second is what we want-- no need to get into DNA barcode data just now. lets get the codes for 'Ground beetles sampled from pitfall traps':
+
+```{r data product code extract}
+# We'll just use the first two data product indicies:
+beetle_indx=beetle_indx[2]
+
+# A little recursive indexing with lapply to extract the productCode element:
+beetle_code=unlist(lapply(prods[beetle_indx], "[[", "productCode"))
+
+print(beetle_code)
+
+```
+
+Now we know the two data product codes we need to get wind speed data. Onto the sites-- we'll use the same tricks as we used on the product information to return site codes:
+
+``` {r AK find} 
+
+#first we'll extract the state codes of all the host states for NEON sites:
+site_states=lapply(sites, "[[", "stateCode")
+
+#Next we'll find the index of states that are Alaska (AK):
+AK_indx=which(unlist(lapply(site_states, function(x) grepl(pattern="AK", x))))
+
+#What are the site codes?
+AK_sites=unlist(lapply(sites[AK_indx], "[[", "siteCode"))
+
+print(AK_sites)
+
+```
+
+Wait-- do the sites in Alaska all have beetle data? Using the data product code from above in the API, we can look at the `siteCodes` element to check if data are available at those sites
+
+``` {r site_intersect}
+
+# Call the API with the beetle DP ID appended:
+beetle_info=rjson::fromJSON(file = "http://data.neonscience.org/api/v0/products/DP1.10022.001/")$data
+
+# Drill down to the NEON sites that have beetle data
+beetle_sites=unlist(lapply(beetle_info$siteCodes, "[[", "siteCode"))
+
+# Lets see what Alaskan sites have beetle data:
+AK_beetle_sites=AK_sites[AK_sites %in% beetle_sites]
+
+print(AK_beetle_sites)
+
+```
+
+Looks like some of the Alaskan sites don't have beetle data. 
+With both data product codes and site codes, we're now ready to begin data downloading via the API. Check out part 2 for more information. 

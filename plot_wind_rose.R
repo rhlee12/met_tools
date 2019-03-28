@@ -80,7 +80,7 @@ wind.rose.plot = function(data, speed.name, dir.name, speed.bins, plot.title, sa
     ggplot2::geom_vline(xintercept=c(0.5, 9.5, 18.5, 27.5))+#crosshairs
     ggplot2::theme(axis.line.x =ggplot2::element_line(colour = "gray"))+
     ggplot2::annotate(x = c(0.8, 9.2, 18.2, 27.8), y = rep(label.y, 4), geom="text", label=c("N", "E", "S", "W"))+
-    ggplot2::annotate(x = c(4.7, 4.7, 4.7, 4.7), y = y.breaks[2:5], geom="text", label=y.labs[2:5], angle=-45)
+    ggplot2::annotate(x = c(4.7, 4.7, 4.7, 4.7), y = y.breaks[2:5]+20, geom="text", label=y.labs[2:5], angle=-45)
   
   ggplot2::ggsave(filename = "windrose.pdf", plot = plot.out, device = "pdf", path = save.dir, width = 10, height = 7.5, units = "in", dpi = 180)
   return(plot.out)
